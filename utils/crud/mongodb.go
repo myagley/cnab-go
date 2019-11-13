@@ -11,7 +11,10 @@ import (
 // MongoClaimsCollection is the name of the claims collection.
 const MongoClaimsCollection = "cnab_claims"
 
+var _ Store = &mongoDBStore{}
+
 type mongoDBStore struct {
+	url        string
 	session    *mgo.Session
 	collection *mgo.Collection
 	dbName     string
@@ -25,22 +28,35 @@ type doc struct {
 // NewMongoDBStore creates a new storage engine that uses MongoDB
 //
 // The URL provided must point to a MongoDB server and database.
-func NewMongoDBStore(url string) (Store, error) {
-	session, err := mgo.Dial(url)
-	if err != nil {
-		return nil, err
+func NewMongoDBStore(url string) Store {
+	db := &mongoDBStore{
+		url: url,
 	}
+	return NewBackingStore(db)
+}
 
-	dbn, err := parseDBName(url)
+func (s *mongoDBStore) Connect() error {
+	dbn, err := parseDBName(s.url)
 	if err != nil {
-		return nil, err
+		return err
 	}
+	s.dbName = dbn
 
-	return &mongoDBStore{
-		session:    session,
-		collection: session.DB(dbn).C(MongoClaimsCollection),
-		dbName:     dbn,
-	}, nil
+	session, err := mgo.Dial(s.url)
+	if err != nil {
+		return err
+	}
+	s.session = session
+	s.collection = session.DB(dbn).C(MongoClaimsCollection)
+	return nil
+}
+
+func (s *mongoDBStore) Close() error {
+	if s.session != nil {
+		s.session.Close()
+		s.session = nil
+	}
+	return nil
 }
 
 func (s *mongoDBStore) List() ([]string, error) {
@@ -58,6 +74,7 @@ func (s *mongoDBStore) List() ([]string, error) {
 func (s *mongoDBStore) Save(name string, data []byte) error {
 	return wrapErr(s.collection.Insert(doc{name, data}))
 }
+
 func (s *mongoDBStore) Read(name string) ([]byte, error) {
 	res := doc{}
 	if err := s.collection.Find(map[string]string{"name": name}).One(&res); err != nil {
@@ -68,6 +85,7 @@ func (s *mongoDBStore) Read(name string) ([]byte, error) {
 	}
 	return res.Data, nil
 }
+
 func (s *mongoDBStore) Delete(name string) error {
 	return wrapErr(s.collection.Remove(map[string]string{"name": name}))
 }
