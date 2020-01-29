@@ -13,6 +13,7 @@ import (
 var _ Store = &MockStore{}
 
 const TestItemType = "test-items"
+const MockStoreType = "mock-store"
 
 func TestMockStore(t *testing.T) {
 	s := NewMockStore()
@@ -24,7 +25,6 @@ func TestMockStore(t *testing.T) {
 	data, err := s.Read(TestItemType, "test")
 	is.NoError(err)
 	is.Equal(data, []byte("data"))
-
 }
 
 type MockStore struct {
@@ -38,7 +38,12 @@ func NewMockStore() *MockStore {
 }
 
 func (s *MockStore) Connect() error {
-	countB, ok := s.data["connect-count"]
+	_, ok := s.data[MockStoreType]
+	if !ok {
+		s.data[MockStoreType] = make(map[string][]byte, 1)
+	}
+
+	countB, ok := s.data[MockStoreType]["connect-count"]
 	if !ok {
 		countB = []byte("0")
 	}
@@ -48,13 +53,18 @@ func (s *MockStore) Connect() error {
 		return fmt.Errorf("could not convert connect-count %s to int: %v", string(countB), err)
 	}
 
-	s.data["connect-count"] = []byte(strconv.Itoa(count + 1))
+	s.data[MockStoreType]["connect-count"] = []byte(strconv.Itoa(count + 1))
 
 	return nil
 }
 
 func (s *MockStore) Close() error {
-	countB, ok := s.data["close-count"]
+	_, ok := s.data[MockStoreType]
+	if !ok {
+		s.data[MockStoreType] = make(map[string][]byte, 1)
+	}
+
+	countB, ok := s.data[MockStoreType]["close-count"]
 	if !ok {
 		countB = []byte("0")
 	}
@@ -64,7 +74,7 @@ func (s *MockStore) Close() error {
 		return fmt.Errorf("could not convert close-count %s to int: %v", string(countB), err)
 	}
 
-	s.data["close-count"] = []byte(strconv.Itoa(count + 1))
+	s.data[MockStoreType]["close-count"] = []byte(strconv.Itoa(count + 1))
 
 	return nil
 }

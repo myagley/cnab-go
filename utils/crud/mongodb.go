@@ -14,7 +14,7 @@ const MongoCollectionPrefix = "cnab_"
 var _ Store = &mongoDBStore{}
 
 type mongoDBStore struct {
-	url        string
+	url         string
 	session     *mgo.Session
 	collections map[string]*mgo.Collection
 	dbName      string
@@ -30,7 +30,7 @@ type doc struct {
 // The URL provided must point to a MongoDB server and database.
 func NewMongoDBStore(url string) Store {
 	db := &mongoDBStore{
-		url: url,
+		url:         url,
 		collections: map[string]*mgo.Collection{},
 	}
 	return NewBackingStore(db)

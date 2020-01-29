@@ -39,7 +39,7 @@ func (s *BackingStore) Close() error {
 	return nil
 }
 
-func (s *BackingStore) List() ([]string, error) {
+func (s *BackingStore) List(itemType string) ([]string, error) {
 	err := s.Connect()
 	if err != nil {
 		return nil, err
@@ -49,10 +49,10 @@ func (s *BackingStore) List() ([]string, error) {
 		defer s.Close()
 	}
 
-	return s.backingStore.List()
+	return s.backingStore.List(itemType)
 }
 
-func (s *BackingStore) Save(name string, data []byte) error {
+func (s *BackingStore) Save(itemType string, name string, data []byte) error {
 	err := s.Connect()
 	if err != nil {
 		return err
@@ -62,10 +62,10 @@ func (s *BackingStore) Save(name string, data []byte) error {
 		defer s.Close()
 	}
 
-	return s.backingStore.Save(name, data)
+	return s.backingStore.Save(itemType, name, data)
 }
 
-func (s *BackingStore) Read(name string) ([]byte, error) {
+func (s *BackingStore) Read(itemType string, name string) ([]byte, error) {
 	err := s.Connect()
 	if err != nil {
 		return nil, err
@@ -75,11 +75,11 @@ func (s *BackingStore) Read(name string) ([]byte, error) {
 		defer s.Close()
 	}
 
-	return s.backingStore.Read(name)
+	return s.backingStore.Read(itemType, name)
 }
 
 // ReadAll retrieves all the items.
-func (s *BackingStore) ReadAll() ([][]byte, error) {
+func (s *BackingStore) ReadAll(itemType string) ([][]byte, error) {
 	if s.AutoClose {
 		defer s.Close()
 	}
@@ -88,13 +88,13 @@ func (s *BackingStore) ReadAll() ([][]byte, error) {
 	s.AutoClose = false
 
 	results := make([][]byte, 0)
-	list, err := s.List()
+	list, err := s.List(itemType)
 	if err != nil {
 		return results, err
 	}
 
 	for _, name := range list {
-		result, err := s.Read(name)
+		result, err := s.Read(itemType, name)
 		if err != nil {
 			return results, err
 		}
@@ -105,7 +105,7 @@ func (s *BackingStore) ReadAll() ([][]byte, error) {
 	return results, nil
 }
 
-func (s *BackingStore) Delete(name string) error {
+func (s *BackingStore) Delete(itemType string, name string) error {
 	err := s.Connect()
 	if err != nil {
 		return err
@@ -115,5 +115,5 @@ func (s *BackingStore) Delete(name string) error {
 		defer s.Close()
 	}
 
-	return s.backingStore.Delete(name)
+	return s.backingStore.Delete(itemType, name)
 }
