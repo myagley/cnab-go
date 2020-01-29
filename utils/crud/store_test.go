@@ -1,6 +1,8 @@
 package crud
 
 import (
+	"fmt"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -33,6 +35,38 @@ func NewMockStore() *MockStore {
 	return &MockStore{
 		data: make(map[string]map[string][]byte),
 	}
+}
+
+func (s *MockStore) Connect() error {
+	countB, ok := s.data["connect-count"]
+	if !ok {
+		countB = []byte("0")
+	}
+
+	count, err := strconv.Atoi(string(countB))
+	if err != nil {
+		return fmt.Errorf("could not convert connect-count %s to int: %v", string(countB), err)
+	}
+
+	s.data["connect-count"] = []byte(strconv.Itoa(count + 1))
+
+	return nil
+}
+
+func (s *MockStore) Close() error {
+	countB, ok := s.data["close-count"]
+	if !ok {
+		countB = []byte("0")
+	}
+
+	count, err := strconv.Atoi(string(countB))
+	if err != nil {
+		return fmt.Errorf("could not convert close-count %s to int: %v", string(countB), err)
+	}
+
+	s.data["close-count"] = []byte(strconv.Itoa(count + 1))
+
+	return nil
 }
 
 func (s *MockStore) List(itemType string) ([]string, error) {
