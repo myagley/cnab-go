@@ -15,6 +15,7 @@ import (
 	"github.com/docker/distribution/reference"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/strslice"
 	"github.com/docker/docker/client"
 	"github.com/docker/docker/pkg/jsonmessage"
@@ -155,6 +156,14 @@ func (d *Driver) exec(op *driver.Operation) (driver.OperationResult, error) {
 		env = append(env, fmt.Sprintf("%s=%v", k, v))
 	}
 
+	mounts := []mount.Mount{
+		{
+			Type:   mount.TypeBind,
+			Source: "/var/run/docker.sock",
+			Target: "/var/run/docker.sock",
+		},
+	}
+
 	cfg := &container.Config{
 		Image:        op.Image.Image,
 		Env:          env,
@@ -163,7 +172,7 @@ func (d *Driver) exec(op *driver.Operation) (driver.OperationResult, error) {
 		AttachStdout: true,
 	}
 
-	hostCfg := &container.HostConfig{}
+	hostCfg := &container.HostConfig{Mounts: mounts}
 	for _, opt := range d.dockerConfigurationOptions {
 		if err := opt(cfg, hostCfg); err != nil {
 			return driver.OperationResult{}, err
